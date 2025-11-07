@@ -1,4 +1,4 @@
-# SRED.IO Frontend
+# github-integration Frontend
 
 Frontend application built with Angular v19 and Angular Material
 
