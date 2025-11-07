@@ -1,4 +1,4 @@
-# SRED.IO Backend
+# github-integration Backend
 
 Backend server built with Node.js v22 and Express.js
 
