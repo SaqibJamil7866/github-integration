@@ -4,7 +4,7 @@ A full-stack integration project built with Angular 19, Node.js (Express.js), an
 ## Project Structure
 
 ```
-sred.io/
+github-integration/
 ├── backend/              # Node.js/Express API server
 │   ├── app.js           # Main application file
 │   ├── controllers/     # Request handlers
