@@ -1,0 +1,314 @@
+<div class="integrations-container">
+  <h1>Integrations</h1>
+  <p class="subtitle">Connect your GitHub account to sync repositories and manage your projects</p>
+
+  <div class="integrations-grid">
+    <!-- GitHub Integration Card -->
+    <mat-card class="integration-card">
+      <mat-card-header>
+        <div class="integration-header">
+          <div class="integration-logo">
+            <mat-icon class="github-icon">code</mat-icon>
+          </div>
+          <div class="integration-info">
+            <mat-card-title>GitHub</mat-card-title>
+            <mat-card-subtitle>Connect to GitHub for repository management</mat-card-subtitle>
+          </div>
+          <div class="integration-status">
+            <mat-icon *ngIf="isConnected && !loading" class="status-icon connected">check_circle</mat-icon>
+            <mat-icon *ngIf="!isConnected && !loading" class="status-icon disconnected">cancel</mat-icon>
+            <mat-spinner *ngIf="loading" diameter="24"></mat-spinner>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div *ngIf="loading" class="loading-state">
+          <p>Loading integration status...</p>
+        </div>
+
+        <div *ngIf="!loading && !isConnected" class="disconnected-state">
+          <p>Connect your GitHub account to enable repository synchronization and management.</p>
+          <ul class="features-list">
+            <li><mat-icon>check</mat-icon> Access your repositories</li>
+            <li><mat-icon>check</mat-icon> Sync project data</li>
+            <li><mat-icon>check</mat-icon> Manage pull requests</li>
+            <li><mat-icon>check</mat-icon> Track issues and commits</li>
+          </ul>
+        </div>
+
+        <div *ngIf="!loading && isConnected && githubIntegration" class="connected-state">
+          <div class="user-info">
+            <img 
+              *ngIf="githubIntegration.avatarUrl" 
+              [src]="githubIntegration.avatarUrl" 
+              [alt]="githubIntegration.username"
+              class="user-avatar"
+            />
+            <div class="user-details">
+              <h3>{{ githubIntegration.displayName || githubIntegration.username }}</h3>
+              <p class="username">&#64;{{ githubIntegration.username }}</p>
+              <p class="email" *ngIf="githubIntegration.email">{{ githubIntegration.email }}</p>
+            </div>
+          </div>
+
+          <div class="connection-info">
+            <mat-chip class="status-chip connected">
+              <mat-icon>check_circle</mat-icon>
+              Connected
+            </mat-chip>
+            <p class="connection-date">
+              <mat-icon>event</mat-icon>
+              Connected on {{ formatDate(githubIntegration.connectedAt) }}
+            </p>
+          </div>
+
+          <div class="metadata" *ngIf="githubIntegration.metadata">
+            <div class="metadata-item" *ngIf="githubIntegration.metadata.publicRepos !== undefined">
+              <mat-icon>folder</mat-icon>
+              <span>{{ githubIntegration.metadata.publicRepos }} repositories</span>
+            </div>
+            <div class="metadata-item" *ngIf="githubIntegration.metadata.followers !== undefined">
+              <mat-icon>people</mat-icon>
+              <span>{{ githubIntegration.metadata.followers }} followers</span>
+            </div>
+            <div class="metadata-item" *ngIf="githubIntegration.metadata.location">
+              <mat-icon>location_on</mat-icon>
+              <span>{{ githubIntegration.metadata.location }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button 
+          mat-raised-button 
+          color="primary" 
+          *ngIf="!isConnected && !loading"
+          (click)="connectGitHub()"
+        >
+          <mat-icon>link</mat-icon>
+          Connect GitHub
+        </button>
+        
+        <button 
+          mat-stroked-button 
+          color="warn" 
+          *ngIf="isConnected && !loading"
+          (click)="disconnectGitHub()"
+        >
+          <mat-icon>link_off</mat-icon>
+          Remove Integration
+        </button>
+
+        <button 
+          mat-button
+          *ngIf="isConnected && !loading"
+          (click)="loadIntegrationStatus()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Re-sync Integration
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- GitHub Organizations & Repositories -->
+    <mat-card class="integration-card organizations-card" *ngIf="isConnected && !loading">
+      <mat-card-header>
+        <div class="integration-header">
+          <div class="integration-logo">
+            <mat-icon class="orgs-icon">business</mat-icon>
+          </div>
+          <div class="integration-info">
+            <mat-card-title>
+              GitHub Organizations
+              <mat-chip class="count-chip" *ngIf="organizations.length > 0">
+                {{ organizations.length }}
+              </mat-chip>
+            </mat-card-title>
+            <mat-card-subtitle>View your organizations and repositories</mat-card-subtitle>
+          </div>
+          <div class="integration-status">
+            <button 
+              mat-icon-button 
+              (click)="loadOrganizations()"
+              [disabled]="organizationsLoading"
+              matTooltip="Refresh organizations"
+            >
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Loading State -->
+        <div *ngIf="organizationsLoading" class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading organizations...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!organizationsLoading && organizations.length === 0" class="empty-state">
+          <mat-icon>business_center</mat-icon>
+          <p>No organizations found</p>
+          <p class="hint">You don't belong to any GitHub organizations yet</p>
+        </div>
+
+        <!-- Organizations List -->
+        <mat-accordion *ngIf="!organizationsLoading && organizations.length > 0" class="organizations-list">
+          <mat-expansion-panel 
+            *ngFor="let org of organizations"
+            (opened)="onOrganizationExpanded(org.login)"
+          >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <img 
+                  [src]="org.avatar_url" 
+                  [alt]="org.login" 
+                  class="org-avatar"
+                />
+                <div class="org-info">
+                  <span class="org-name">{{ org.login }}</span>
+                  <span class="org-description" *ngIf="org.description">{{ org.description }}</span>
+                </div>
+              </mat-panel-title>
+              <mat-panel-description>
+                <mat-chip class="repo-count" *ngIf="organizationRepos[org.login]">
+                  <mat-icon>folder</mat-icon>
+                  {{ organizationRepos[org.login].length }}
+                </mat-chip>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <!-- Repositories List -->
+            <div class="repos-container">
+              <!-- Organization Members Button -->
+              <div class="org-actions">
+                <button 
+                  mat-stroked-button 
+                  color="primary" 
+                  (click)="loadOrganizationMembers(org.login)"
+                  [disabled]="loadingMembers[org.login]"
+                >
+                  <mat-icon>people</mat-icon>
+                  {{ showMembers[org.login] ? 'Hide' : 'Show' }} Members
+                  <mat-spinner *ngIf="loadingMembers[org.login]" diameter="16"></mat-spinner>
+                </button>
+              </div>
+
+              <!-- Organization Members List -->
+              <div *ngIf="showMembers[org.login] && organizationMembers[org.login]" class="members-section">
+                <h4 class="section-title">
+                  <mat-icon>people</mat-icon>
+                  Organization Members ({{ organizationMembers[org.login].length }})
+                </h4>
+                <div class="members-grid">
+                  <div *ngFor="let member of organizationMembers[org.login]" class="member-card">
+                    <img [src]="member.avatar_url" [alt]="member.login" class="member-avatar" />
+                    <div class="member-info">
+                      <a [href]="member.html_url" target="_blank" class="member-name">
+                        {{ member.login }}
+                      </a>
+                      <span class="member-type">{{ member.type }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading Repos -->
+              <div *ngIf="loadingRepos[org.login]" class="loading-repos">
+                <mat-spinner diameter="30"></mat-spinner>
+                <p>Loading repositories...</p>
+              </div>
+
+              <!-- Repos List -->
+              <mat-accordion *ngIf="!loadingRepos[org.login] && organizationRepos[org.login]" class="repos-accordion">
+                <mat-expansion-panel 
+                  *ngFor="let repo of organizationRepos[org.login]" 
+                  class="repo-panel"
+                  (opened)="onRepoExpanded(org.login, repo)"
+                >
+                  <mat-expansion-panel-header>
+                    <mat-panel-title class="repo-panel-title">
+                      <mat-icon>folder_open</mat-icon>
+                      <div class="repo-title-content">
+                        <a [href]="repo.html_url" target="_blank" class="repo-link" (click)="$event.stopPropagation()">
+                          {{ repo.name }}
+                        </a>
+                        <mat-chip class="visibility-chip" [class.private]="repo.private">
+                          <mat-icon>{{ repo.private ? 'lock' : 'public' }}</mat-icon>
+                          {{ repo.private ? 'Private' : 'Public' }}
+                        </mat-chip>
+                      </div>
+                    </mat-panel-title>
+                    <mat-panel-description class="repo-panel-description">
+                      <span class="stat" *ngIf="repo.language">
+                        <mat-icon>code</mat-icon>
+                        {{ repo.language }}
+                      </span>
+                      <span class="stat">
+                        <mat-icon>star</mat-icon>
+                        {{ repo.stargazers_count }}
+                      </span>
+                      <span class="stat">
+                        <mat-icon>call_split</mat-icon>
+                        {{ repo.forks_count }}
+                      </span>
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <!-- Repository Details -->
+                  <div class="repo-details">
+                    <p class="repo-description" *ngIf="repo.description">{{ repo.description }}</p>
+                    
+                    <!-- Loading Repo Details -->
+                    <div *ngIf="loadingRepoDetails[org.login + '/' + repo.name]" class="loading-details">
+                      <mat-spinner diameter="24"></mat-spinner>
+                      <p>Loading repository details...</p>
+                    </div>
+
+                    <!-- Repo Stats Container -->
+                    <div *ngIf="!loadingRepoDetails[org.login + '/' + repo.name]" class="repo-stats-container">
+                      <!-- Commits Component -->
+                      <app-repository-commits
+                        [commits]="repoCommits[org.login + '/' + repo.name]"
+                        [loading]="false"
+                      ></app-repository-commits>
+
+                      <!-- Pull Requests Component -->
+                      <app-repository-pulls
+                        [pulls]="repoPulls[org.login + '/' + repo.name]"
+                        [loading]="false"
+                        [userId]="userId"
+                        [owner]="repo.owner.login"
+                        [repo]="repo.name"
+                      ></app-repository-pulls>
+
+                      <!-- Issues Component -->
+                      <app-repository-issues
+                        [issues]="repoIssues[org.login + '/' + repo.name]"
+                        [userId]="userId"
+                        [owner]="repo.owner.login"
+                        [repo]="repo.name"
+                      ></app-repository-issues>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+
+              <!-- Empty Repos State -->
+              <div 
+                *ngIf="!loadingRepos[org.login] && organizationRepos[org.login]?.length === 0" 
+                class="empty-repos"
+              >
+                <mat-icon>folder_off</mat-icon>
+                <p>No repositories found in this organization</p>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

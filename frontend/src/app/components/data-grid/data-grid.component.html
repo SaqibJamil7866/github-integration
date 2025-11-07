@@ -1,0 +1,127 @@
+<div class="data-grid-container">
+  <div class="grid-header">
+    <h1>Data Explorer</h1>
+    <p class="subtitle">Explore and analyze your GitHub integration data</p>
+  </div>
+
+  <div class="grid-controls">
+    <!-- Integration Selection -->
+    <div class="control-group">
+      <mat-form-field appearance="outline" class="integration-select">
+        <mat-label>Active Integration</mat-label>
+        <mat-select [(ngModel)]="selectedIntegration" disabled>
+          <mat-option *ngFor="let integration of integrations" [value]="integration.value">
+            {{ integration.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Collection Selection -->
+      <mat-form-field appearance="outline" class="collection-select">
+        <mat-label>Entity / Collection</mat-label>
+        <mat-select 
+          [(ngModel)]="selectedCollection" 
+          (selectionChange)="onCollectionChange()"
+          [disabled]="collectionsLoading"
+        >
+          <mat-option *ngFor="let collection of collections" [value]="collection.name">
+            {{ collection.label }} ({{ collection.count }})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Global Search -->
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search</mat-label>
+        <input 
+          matInput 
+          type="text" 
+          placeholder="Search across all fields..." 
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange($event)"
+        />
+        <mat-icon matPrefix>search</mat-icon>
+        <button 
+          mat-icon-button 
+          matSuffix 
+          *ngIf="searchTerm" 
+          (click)="searchTerm=''; onSearchChange({target:{value:''}})"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button 
+        mat-stroked-button 
+        (click)="clearFilters()" 
+        [disabled]="loading"
+      >
+        <mat-icon>filter_alt_off</mat-icon>
+        Clear Filters
+      </button>
+      
+      <button 
+        mat-stroked-button 
+        (click)="refreshGrid()" 
+        [disabled]="loading"
+      >
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="exportToCsv()" 
+        [disabled]="loading"
+      >
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Grid Info -->
+  <div class="grid-info" *ngIf="selectedCollection">
+    <mat-chip>
+      <mat-icon>storage</mat-icon>
+      Collection: {{ selectedCollection }}
+    </mat-chip>
+    <mat-chip>
+      <mat-icon>table_rows</mat-icon>
+      Total Records: {{ totalCount }}
+    </mat-chip>
+    <mat-chip *ngIf="loading">
+      <mat-spinner diameter="16"></mat-spinner>
+      Loading...
+    </mat-chip>
+  </div>
+
+  <!-- AG Grid -->
+  <div class="grid-wrapper">
+    <ag-grid-angular
+      *ngIf="selectedCollection && columnDefs.length > 0"
+      [attr.data-collection]="selectedCollection"
+      class="ag-theme-alpine"
+      [gridOptions]="gridOptions"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      (gridReady)="onGridReady($event)"
+      (sortChanged)="onSortChanged()"
+      (filterChanged)="onFilterChanged()"
+      domLayout="normal"
+    >
+    </ag-grid-angular>
+
+    <!-- Loading State -->
+    <div *ngIf="!selectedCollection || columnDefs.length === 0" class="empty-state">
+      <mat-icon>table_chart</mat-icon>
+      <h3>{{columnDefs.length === 0 && selectedCollection ? 'Loading Schema...' : 'Select a Collection'}}</h3>
+      <p>{{columnDefs.length === 0 && selectedCollection ? 'Generating columns from schema' : 'Choose a collection from the dropdown above to view data'}}</p>
+    </div>
+  </div>
+</div>
+

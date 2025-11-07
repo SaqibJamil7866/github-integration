@@ -1,0 +1,51 @@
+<mat-expansion-panel class="stats-section-panel" [expanded]="false">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon>commit</mat-icon>
+      <span>Recent Commits ({{ commits?.length || 0 }})</span>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="section-content">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <p>Loading commits...</p>
+    </div>
+
+    <!-- Commits List -->
+    <div *ngIf="!loading && commits && commits.length > 0" class="commits-list">
+      <div *ngFor="let commit of commits" class="commit-item">
+        <div class="commit-header">
+          <img 
+            *ngIf="commit.author?.avatar_url" 
+            [src]="commit.author.avatar_url" 
+            [alt]="commit.commit.author.name"
+            class="commit-avatar"
+          />
+          <div class="commit-info">
+            <a 
+              [href]="commit.html_url" 
+              target="_blank" 
+              class="commit-message"
+              [matTooltip]="commit.commit.message"
+              matTooltipPosition="above"
+            >
+              {{ commit.commit.message.split('\n')[0] }}
+            </a>
+            <span class="commit-meta">
+              by {{ commit.commit.author.name }} • {{ formatDate(commit.commit.author.date) }}
+            </span>
+          </div>
+          <span class="commit-sha">{{ commit.sha.substring(0, 7) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <p *ngIf="!loading && (!commits || commits.length === 0)" class="empty-message">
+      No commits found
+    </p>
+  </div>
+</mat-expansion-panel>
+

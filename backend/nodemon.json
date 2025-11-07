@@ -1,0 +1,23 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    "node_modules/**",
+    "test/**",
+    ".git/**",
+    "*.log"
+  ],
+  "watch": [
+    "*.js",
+    "controllers/**",
+    "models/**",
+    "routes/**",
+    "helpers/**"
+  ],
+  "ext": "js,json",
+  "delay": 2000,
+  "signal": "SIGTERM",
+  "verbose": true,
+  "legacyWatch": false,
+  "killAll": true
+}
+

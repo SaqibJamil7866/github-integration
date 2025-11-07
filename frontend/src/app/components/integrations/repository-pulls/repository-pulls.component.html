@@ -1,0 +1,49 @@
+<mat-expansion-panel class="stats-section-panel" [expanded]="false" (opened)="onPanelExpanded()">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon>merge_type</mat-icon>
+      <span>Pull Requests ({{ pulls?.length || 0 }})</span>
+      <mat-spinner *ngIf="isLoadingMore" diameter="20" class="inline-spinner"></mat-spinner>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="section-content">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <p>Loading pull requests...</p>
+    </div>
+
+    <!-- Pulls List -->
+    <div *ngIf="!loading && pulls && pulls.length > 0" class="pulls-list">
+      <div *ngFor="let pull of pulls" class="pull-item">
+        <div class="pull-header">
+          <mat-chip [class]="'pull-state-' + pull.state" class="state-chip">
+            <mat-icon>{{ pull.state === 'open' ? 'radio_button_checked' : 'check_circle' }}</mat-icon>
+            {{ pull.state }}
+          </mat-chip>
+          <div class="pull-info">
+            <a 
+              [href]="pull.html_url" 
+              target="_blank" 
+              class="pull-title"
+              [matTooltip]="'#' + pull.number + ': ' + pull.title"
+              matTooltipPosition="above"
+            >
+              #{{ pull.number }}: {{ pull.title }}
+            </a>
+            <span class="pull-meta">
+              by {{ pull.user.login }} • {{ formatDate(pull.created_at) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <p *ngIf="!loading && (!pulls || pulls.length === 0)" class="empty-message">
+      No pull requests found
+    </p>
+  </div>
+</mat-expansion-panel>
+

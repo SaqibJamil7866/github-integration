@@ -1,0 +1,122 @@
+<mat-expansion-panel class="stats-section-panel" [expanded]="false" (opened)="onPanelExpanded()">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon>bug_report</mat-icon>
+      <span>Issues ({{ issues?.length || 0 }})</span>
+      <mat-spinner *ngIf="isLoadingMore" diameter="16" class="header-spinner"></mat-spinner>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="section-content">
+    <!-- Issues List -->
+    <div *ngIf="issues && issues.length > 0" class="issues-list">
+      <div *ngFor="let issue of issues" class="issue-item">
+        <div class="issue-header">
+          <div class="issue-status-section">
+            <mat-chip [class]="'issue-state-' + issue.state" class="state-chip">
+              <mat-icon>{{ issue.state === 'open' ? 'radio_button_checked' : 'check_circle' }}</mat-icon>
+              {{ issue.state }}
+            </mat-chip>
+            <span class="issue-number">#{{ issue.number }}</span>
+          </div>
+          
+          <div class="issue-info">
+            <a 
+              [href]="issue.html_url" 
+              target="_blank" 
+              class="issue-title"
+              [matTooltip]="issue.title"
+              matTooltipPosition="above"
+            >
+              {{ issue.title }}
+            </a>
+            
+            <div class="issue-meta-row">
+              <span class="issue-meta">
+                <mat-icon class="meta-icon">person</mat-icon>
+                {{ issue.user.login }}
+              </span>
+              <span class="issue-meta">
+                <mat-icon class="meta-icon">schedule</mat-icon>
+                {{ formatDate(issue.created_at) }}
+              </span>
+              <span *ngIf="issue.comments > 0" class="issue-meta">
+                <mat-icon class="meta-icon">comment</mat-icon>
+                {{ issue.comments }} {{ issue.comments === 1 ? 'comment' : 'comments' }}
+              </span>
+              <span *ngIf="issue.timeline && issue.timeline.length > 0" class="issue-meta timeline-meta">
+                <mat-icon class="meta-icon">history</mat-icon>
+                {{ issue.timeline.length }} {{ issue.timeline.length === 1 ? 'event' : 'events' }}
+              </span>
+            </div>
+
+            <div *ngIf="issue.labels && issue.labels.length > 0" class="issue-labels">
+              <mat-chip 
+                *ngFor="let label of issue.labels" 
+                class="label-chip"
+                [style.background-color]="'#' + label.color"
+                [matTooltip]="label.description || label.name"
+              >
+                {{ label.name }}
+              </mat-chip>
+            </div>
+
+            <!-- Timeline/Changelog Section -->
+            <div class="issue-timeline">
+              <button 
+                mat-stroked-button 
+                class="timeline-toggle"
+                (click)="toggleTimeline(issue)"
+                [class.expanded]="expandedTimelines.has(issue.number)"
+                [disabled]="isTimelineLoading(issue.number)"
+              >
+                <mat-spinner *ngIf="isTimelineLoading(issue.number)" diameter="16" class="timeline-spinner"></mat-spinner>
+                <mat-icon *ngIf="!isTimelineLoading(issue.number)">{{ expandedTimelines.has(issue.number) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                <span *ngIf="!isTimelineLoading(issue.number)">
+                  {{ expandedTimelines.has(issue.number) ? 'Hide' : 'View' }} Timeline
+                  <span *ngIf="issue.timeline && issue.timeline.length > 0">({{ issue.timeline.length }})</span>
+                </span>
+                <span *ngIf="isTimelineLoading(issue.number)">Loading Timeline...</span>
+              </button>
+
+              <div *ngIf="expandedTimelines.has(issue.number) && issue.timeline && issue.timeline.length > 0" class="timeline-events">
+                <div *ngFor="let event of issue.timeline; let i = index" class="timeline-event">
+                  <div class="event-connector" *ngIf="i < issue.timeline.length - 1"></div>
+                  <div class="event-icon-wrapper">
+                    <mat-icon [class]="'event-icon event-' + event.event">{{ getEventIcon(event.event) }}</mat-icon>
+                  </div>
+                  <div class="event-content">
+                    <div class="event-header">
+                      <span class="event-actor">
+                        <strong>{{ event.actor?.login || 'Unknown' }}</strong>
+                      </span>
+                      <span class="event-action">{{ getEventAction(event.event) }}</span>
+                      <span *ngIf="event.label" class="event-label" [style.background-color]="'#' + event.label.color">
+                        {{ event.label.name }}
+                      </span>
+                      <span *ngIf="event.assignee" class="event-assignee">
+                        <mat-icon>person</mat-icon>
+                        {{ event.assignee.login }}
+                      </span>
+                    </div>
+                    <div *ngIf="event.body" class="event-body">{{ event.body }}</div>
+                    <div class="event-time">
+                      <mat-icon>schedule</mat-icon>
+                      {{ formatDate(event.createdAt) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <p *ngIf="!isLoadingMore && (!issues || issues.length === 0)" class="empty-message">
+      No issues found
+    </p>
+  </div>
+</mat-expansion-panel>
+

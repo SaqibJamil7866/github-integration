@@ -1,0 +1,16 @@
+<mat-toolbar color="primary">
+  <mat-icon>dashboard</mat-icon>
+  <span class="toolbar-spacer">{{ title }}</span>
+  <button mat-button routerLink="/integrations" routerLinkActive="active-link">
+    <mat-icon>integration_instructions</mat-icon>
+    Integrations
+  </button>
+  <button mat-button routerLink="/data-grid" routerLinkActive="active-link">
+    <mat-icon>table_chart</mat-icon>
+    Data Explorer
+  </button>
+</mat-toolbar>
+
+<div class="app-content">
+  <router-outlet />
+</div>
